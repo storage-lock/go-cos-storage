@@ -2,7 +2,6 @@ package cos_storage
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/url"
 	"sync"
@@ -23,6 +22,8 @@ type COSConnectionManager struct {
 	initialized bool
 	client      *cos.Client
 }
+
+const COSConnectionManagerName = "cos-connection-manager"
 
 var _ storage.ConnectionManager[*cos.Client] = &COSConnectionManager{}
 
@@ -45,32 +46,20 @@ func NewCOSConnectionManagerFromClient(client *cos.Client) *COSConnectionManager
 }
 
 func (x *COSConnectionManager) Name() string {
-	return "cos-connection-manager"
+	return COSConnectionManagerName
 }
 
 func (x *COSConnectionManager) Take(ctx context.Context) (*cos.Client, error) {
+	if x.presetClient != nil {
+		return x.presetClient, nil
+	}
 	x.initMu.Lock()
 	defer x.initMu.Unlock()
-
-	if x.initialized {
+	if x.client != nil {
 		return x.client, nil
 	}
-
-	u, err := url.Parse(x.BucketURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse bucket URL: %w", err)
-	}
-
-	b := &cos.BaseURL{BucketURL: u}
-	client := cos.NewClient(b, &http.Client{
-		Transport: &cos.AuthorizationTransport{
-			SecretID:  x.SecretID,
-			SecretKey: x.SecretKey,
-		},
-	})
-
-	x.client = client
-	x.initialized = true
+	u, _ := url.Parse(x.BucketURL)
+	x.client = cos.NewClient(&cos.BaseURL{BucketURL: u}, http.DefaultClient)
 	return x.client, nil
 }
 
@@ -79,9 +68,5 @@ func (x *COSConnectionManager) Return(ctx context.Context, connection *cos.Clien
 }
 
 func (x *COSConnectionManager) Shutdown(ctx context.Context) error {
-	x.initMu.Lock()
-	defer x.initMu.Unlock()
-	x.client = nil
-	x.initialized = false
 	return nil
 }
