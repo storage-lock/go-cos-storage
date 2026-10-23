@@ -23,7 +23,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/mozillazg/go-httpheader v0.2.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/storage-lock/go-events v0.0.4 // indirect
+	github.com/storage-lock/go-events v0.0.5 // indirect
 	github.com/storage-lock/go-storage-events v0.0.6 // indirect
 	github.com/storage-lock/go-utils v0.0.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
